@@ -1,0 +1,22 @@
+steps:
+  # Step 1: Install dependencies and run retraining script
+  - name: python
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        pip install --upgrade pip
+        pip install -r requirements.txt
+        python retrain.py
+
+  # Step 2: Deploy updated model server to Cloud Run
+  - name: gcr.io/cloud-builders/gcloud
+    args:
+      - run
+      - deploy
+      - recommendation-server
+      - --source=.
+      - --region=asia-southeast1
+      - --allow-unauthenticated
+
+timeout: 1200s

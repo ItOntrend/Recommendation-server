@@ -1,41 +1,30 @@
-name: Retrain and Deploy
+name: Retrain and Deploy Model
 
 on:
   schedule:
-    - cron: '0 4 * * *' # every day at 4 AM UTC
-  workflow_dispatch:
+    - cron: '0 4 * * *'  # Runs every day at 4 AM UTC
+  workflow_dispatch:  # Optional: lets you trigger manually
 
 jobs:
-  retrain-and-deploy:
+  retrain:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: Set up Google Cloud CLI
+        uses: google-github-actions/auth@v1
         with:
-          python-version: 3.10
+          credentials_json: ${{ secrets.GCLOUD_SERVICE_KEY }}
 
-      - name: Install dependencies
-        run: |
-          pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install joblib tensorflow scikit-learn firebase-admin
-
-      - name: Setup Google Cloud SDK
+      - name: Set up gcloud CLI
         uses: google-github-actions/setup-gcloud@v1
         with:
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
           project_id: ontrend-db
 
-      - name: Retrain Model
-        run: python retrain.py
-
-      - name: Deploy Recommendation Server
+      - name: Trigger Cloud Build to retrain and deploy
         run: |
-          gcloud run deploy recommendation-server \
-            --source . \
-            --region asia-southeast1 \
-            --allow-unauthenticated
+          gcloud builds submit --config cloudbuild.yaml --region=asia-southeast1
+
+        
